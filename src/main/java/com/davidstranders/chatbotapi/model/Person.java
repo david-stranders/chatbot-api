@@ -14,10 +14,11 @@ public class Person extends BaseEntity {
     @NonNull
     private String name;
 
-    @JoinTable(
-            name = "person_appointments",
-            joinColumns = {@JoinColumn(name = "person_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "appointments_id", referencedColumnName = "id")}
-    )
+    @ManyToMany
+//    @JoinTable(
+//            name = "person_appointments",
+//            joinColumns = {@JoinColumn(name = "person_id", referencedColumnName = "id")},
+//            inverseJoinColumns = {@JoinColumn(name = "appointment_id", referencedColumnName = "id")}
+//    )
     private List<Appointment> appointments;
 }

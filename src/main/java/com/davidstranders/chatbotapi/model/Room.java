@@ -14,6 +14,6 @@ public class Room extends BaseEntity {
     @NonNull
     private String name;
 
-    @OneToMany(mappedBy = "attendees")
+    @OneToMany(mappedBy = "room")
     private List<Appointment> appointments;
 }

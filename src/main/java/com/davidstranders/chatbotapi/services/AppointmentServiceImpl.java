@@ -13,4 +13,9 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentServiceImpl(AppointmentRepository repository) {
         this.repository = repository;
     }
+
+    public String findAppointments(String requestBody){
+
+        return "";
+    }
 }

@@ -11,6 +11,7 @@ import java.util.List;
 @Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"id"})
 public class Appointment extends BaseEntity {
 
     @NonNull
@@ -23,5 +24,5 @@ public class Appointment extends BaseEntity {
     private Room room;
 
     @ManyToMany(mappedBy = "appointments", fetch = FetchType.EAGER)
-    private List<Person> attendees;
+    private List<Person> persons;
 }
