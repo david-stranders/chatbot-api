@@ -1,28 +1,23 @@
 package com.davidstranders.chatbotapi.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
+@RequiredArgsConstructor
 @AllArgsConstructor
-public class Appointment {
+public class Appointment extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @NonNull
+    private LocalDateTime start;
 
-    @NotNull
-    private LocalDateTime dateTime;
+    @NonNull
+    private LocalDateTime end;
 
     @ManyToOne(fetch = FetchType.EAGER)
     private Room room;

@@ -1,28 +1,23 @@
 package com.davidstranders.chatbotapi.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Person {
+@RequiredArgsConstructor
+public class Person extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    @NotNull
+    @NonNull
     private String name;
 
-    @ManyToMany
+    @JoinTable(
+            name = "person_appointments",
+            joinColumns = {@JoinColumn(name = "person_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "appointments_id", referencedColumnName = "id")}
+    )
     private List<Appointment> appointments;
 }
