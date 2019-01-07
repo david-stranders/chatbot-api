@@ -12,7 +12,7 @@ public interface AppointmentRepository extends CrudRepository<Appointment, Long>
 
     List<Appointment> findAllByOrderByStartDesc();
 
-    List<Appointment> findAllByStart(LocalDateTime start);
+    List<Appointment> findAllByStartGreaterThanEqualAndStartLessThanEqual(LocalDateTime start, LocalDateTime end);
 }
 
 

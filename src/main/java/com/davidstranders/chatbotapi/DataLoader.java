@@ -49,22 +49,22 @@ public class DataLoader {
         Person david = new Person("David Stranders");
         david = personRepository.save(david);
 
-        Appointment appointment1 = new Appointment(LocalDateTime.of(2019, 01, 10, 14, 00),
+        Appointment appointment1 = new Appointment(LocalDateTime.of(2019, 01, 8, 14, 00),
                 LocalDateTime.of(2019, 01, 10, 15, 00),
                 room1, new ArrayList<>(Arrays.asList(david, jan)));
         appointmentRepository.save(appointment1);
 
-        Appointment appointment2 = new Appointment(LocalDateTime.of(2019, 01, 10, 16, 00),
+        Appointment appointment2 = new Appointment(LocalDateTime.of(2019, 01, 8, 16, 00),
                 LocalDateTime.of(2019, 01, 10, 17, 30),
                 room1, new ArrayList<>(Arrays.asList(david, jan)));
         appointmentRepository.save(appointment2);
 
-        Appointment appointment3 = new Appointment(LocalDateTime.of(2019, 01, 11, 9, 00),
+        Appointment appointment3 = new Appointment(LocalDateTime.of(2019, 01, 9, 9, 00),
                 LocalDateTime.of(2019, 01, 11, 12, 30),
                 room2, new ArrayList<>(Arrays.asList(david, jan, piet)));
         appointmentRepository.save(appointment3);
 
-        Appointment appointment4 = new Appointment(LocalDateTime.of(2019, 01, 11, 13, 00),
+        Appointment appointment4 = new Appointment(LocalDateTime.of(2019, 01, 9, 13, 00),
                 LocalDateTime.of(2019, 01, 11, 14, 30),
                 room3, new ArrayList<>(Arrays.asList(david, klaas)));
         appointmentRepository.save(appointment4);
