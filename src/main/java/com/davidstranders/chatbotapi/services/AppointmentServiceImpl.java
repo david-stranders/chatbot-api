@@ -26,19 +26,19 @@ public class AppointmentServiceImpl implements AppointmentService {
         final Configuration conf = Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS);
         String date = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date");
         String dateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date-time.date_time");
-        String startDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date-time.startDateTime");
-        String endDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date-time.endDateTime");
+        String startDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.startDateTime");
+        String endDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.endDateTime");
 
         LocalDateTime startDateTime = null;
         LocalDateTime endDateTime = null;
 
         DateTimeFormatter formatter;
-        if (date != null){
+        if (date != null && date.length() > 0){
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             startDateTime = LocalDateTime.parse(date.substring(0,10) + " 00:00", formatter);
             endDateTime = startDateTime.plusDays(1);
         }
-        else if (dateTimeString != null) {
+        else if (dateTimeString != null && dateTimeString.length() > 0) {
             formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
             startDateTime = LocalDateTime.parse(dateTimeString, formatter);
             endDateTime = LocalDateTime.parse(dateTimeString, formatter);
