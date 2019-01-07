@@ -8,6 +8,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 @RequiredArgsConstructor
 public class Room extends BaseEntity {
 

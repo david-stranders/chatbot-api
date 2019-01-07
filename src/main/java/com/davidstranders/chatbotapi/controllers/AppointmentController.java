@@ -1,6 +1,6 @@
 package com.davidstranders.chatbotapi.controllers;
 
-import com.davidstranders.chatbotapi.model.Appointment;
+import com.davidstranders.chatbotapi.model.*;
 import com.davidstranders.chatbotapi.services.AppointmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 
 @Slf4j
 @RestController
@@ -24,11 +25,12 @@ public class AppointmentController {
         this.service = service;
     }
 
-
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<String> findAppointments(@RequestBody final String requestBody) {
-        String result = service.findAppointments(requestBody);
-        return new ResponseEntity<>(result, HttpStatus.OK);
+    public ResponseEntity<com.davidstranders.chatbotapi.model.ResponseEntity> findAppointments(@RequestBody final String requestJson) {
+        String result = service.findAppointments(requestJson);
+        com.davidstranders.chatbotapi.model.ResponseEntity responseEntity =
+                new com.davidstranders.chatbotapi.model.ResponseEntity(result, result, "findAppointments");
+        return new ResponseEntity<>(responseEntity, HttpStatus.OK);
     }
 
 

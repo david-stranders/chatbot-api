@@ -1,8 +1,11 @@
 package com.davidstranders.chatbotapi.services;
 
+import com.davidstranders.chatbotapi.model.Appointment;
 import com.davidstranders.chatbotapi.repository.AppointmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class AppointmentServiceImpl implements AppointmentService {
@@ -16,6 +19,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     public String findAppointments(String requestBody){
 
-        return "";
+        List<Appointment> appointments = repository.findAllByOrderByStartDesc();
+
+        return appointments.toString();
     }
 }

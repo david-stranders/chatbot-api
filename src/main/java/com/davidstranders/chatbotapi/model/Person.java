@@ -8,17 +8,13 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 @RequiredArgsConstructor
 public class Person extends BaseEntity {
 
     @NonNull
     private String name;
 
-    @ManyToMany
-//    @JoinTable(
-//            name = "person_appointments",
-//            joinColumns = {@JoinColumn(name = "person_id", referencedColumnName = "id")},
-//            inverseJoinColumns = {@JoinColumn(name = "appointment_id", referencedColumnName = "id")}
-//    )
+    @ManyToMany(mappedBy = "persons")
     private List<Appointment> appointments;
 }
