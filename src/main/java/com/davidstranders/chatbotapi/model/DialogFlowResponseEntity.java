@@ -6,9 +6,8 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponseEntity {
+public class DialogFlowResponseEntity {
 
-    private String speech;
-    private String displayText;
+    private String fulfillmentText;
     private String source;
 }

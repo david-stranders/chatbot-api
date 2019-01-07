@@ -26,10 +26,9 @@ public class AppointmentController {
     }
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<com.davidstranders.chatbotapi.model.ResponseEntity> findAppointments(@RequestBody final String requestJson) {
+    public ResponseEntity<DialogFlowResponseEntity> findAppointments(@RequestBody final String requestJson) {
         String result = service.findAppointments(requestJson);
-        com.davidstranders.chatbotapi.model.ResponseEntity responseEntity =
-                new com.davidstranders.chatbotapi.model.ResponseEntity(result, result, "findAppointments");
+        DialogFlowResponseEntity responseEntity = new DialogFlowResponseEntity(result, "findAppointments");
         return new ResponseEntity<>(responseEntity, HttpStatus.OK);
     }
 
