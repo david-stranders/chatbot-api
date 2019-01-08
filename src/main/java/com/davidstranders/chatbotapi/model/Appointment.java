@@ -28,9 +28,9 @@ public class Appointment extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "person_appointments",
-            joinColumns = {@JoinColumn(name = "person_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "appointment_id", referencedColumnName = "id")}
+            name = "appointment_person",
+            joinColumns = {@JoinColumn(name = "appointment_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "person_id", referencedColumnName = "id")}
     )
     private List<Person> persons;
 
