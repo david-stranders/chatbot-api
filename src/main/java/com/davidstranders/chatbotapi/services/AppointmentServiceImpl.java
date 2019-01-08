@@ -11,11 +11,18 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository repository;
+
+    private LocalDateTime startDateTime;
+    private LocalDateTime endDateTime;
+    private boolean future;
+    private String dateOriginalValue;
+    private String dateTimeOriginalValue;
 
     @Autowired
     public AppointmentServiceImpl(AppointmentRepository repository) {
@@ -23,19 +30,44 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     public String findAppointments(String requestBody){
+
+        setStartDateTimeEndDateTime(requestBody);
+
+        List<Appointment> appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
+
+        if (!appointments.isEmpty()) {
+
+            String baseString;
+
+            future = !startDateTime.isBefore(LocalDateTime.now());
+            String verb = future ? " heb" : " had";
+
+            if (appointments.size() == 1) {
+                baseString = dateOriginalValue + dateTimeOriginalValue + verb + " je de volgende afspraak: ";
+            } else {
+                baseString = dateOriginalValue + dateTimeOriginalValue + verb + " je de volgende afspraken: ";
+            }
+
+            return baseString + appointments.stream().
+                    map(appointment -> appointment.toString()).
+                    collect(Collectors.joining(", "));
+        } else {
+            return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden";
+        }
+    }
+
+    private void setStartDateTimeEndDateTime(String requestBody) {
+
         final Configuration conf = Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS);
-        String dateOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateOriginalValue");
-        dateOriginalValue = dateOriginalValue.replaceAll("[^a-zA-Z]", "");
-        String dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");
-        dateTimeOriginalValue = dateTimeOriginalValue.replaceAll("[^a-zA-Z]", "");
+        dateOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateOriginalValue");
+        dateOriginalValue = cleanOriginalValue(dateOriginalValue);
+        dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");
+        dateTimeOriginalValue = cleanOriginalValue(dateTimeOriginalValue);
 
-        String date = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date");
-        String dateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date-time.date_time");
-        String startDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.startDateTime");
-        String endDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.endDateTime");
-
-        LocalDateTime startDateTime = null;
-        LocalDateTime endDateTime = null;
+        final String date = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date");
+        final String dateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.date_time");
+        final String startDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.startDateTime");
+        final String endDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.endDateTime");
 
         DateTimeFormatter formatter;
         if (date != null && date.length() > 0){
@@ -52,19 +84,13 @@ public class AppointmentServiceImpl implements AppointmentService {
             startDateTime = LocalDateTime.parse(startDateTimeString, formatter);
             endDateTime = LocalDateTime.parse(endDateTimeString, formatter);
         }
+    }
 
-        List<Appointment> appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
-
-        if (!appointments.isEmpty()) {
-            String baseString;
-            if (appointments.size() == 1) {
-                baseString = "Voor " + dateOriginalValue + dateTimeOriginalValue + " heb je de volgende afspraak: ";
-            } else {
-                baseString = "Voor " + dateOriginalValue + dateTimeOriginalValue + " heb je de volgende afspraken: ";
-            }
-            return baseString + appointments.toString().replace("[", "").replace("]", "");
-        } else {
-            return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden";
+    private String cleanOriginalValue(String value){
+        if (value != null && value.length() > 0) {
+            value = value.replaceAll("[^a-zA-Z0-9\\s]", "");
+            value = value.substring(0, 1).toUpperCase() + value.substring(1);
         }
+        return value;
     }
 }
