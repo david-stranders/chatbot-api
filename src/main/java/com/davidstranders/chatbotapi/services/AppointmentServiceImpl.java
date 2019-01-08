@@ -24,6 +24,11 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     public String findAppointments(String requestBody){
         final Configuration conf = Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS);
+        String dateOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateOriginalValue");
+        dateOriginalValue = dateOriginalValue.replaceAll("[^a-zA-Z]", "");
+        String dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");
+        dateTimeOriginalValue = dateTimeOriginalValue.replaceAll("[^a-zA-Z]", "");
+
         String date = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date");
         String dateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date-time.date_time");
         String startDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.startDateTime");
@@ -48,13 +53,18 @@ public class AppointmentServiceImpl implements AppointmentService {
             endDateTime = LocalDateTime.parse(endDateTimeString, formatter);
         }
 
-
-        List<Appointment> appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqual(startDateTime, endDateTime);
+        List<Appointment> appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
 
         if (!appointments.isEmpty()) {
-            return appointments.toString().replace("[", "").replace("]", "");
+            String baseString;
+            if (appointments.size() == 1) {
+                baseString = "Voor " + dateOriginalValue + dateTimeOriginalValue + " heb je de volgende afspraak: ";
+            } else {
+                baseString = "Voor " + dateOriginalValue + dateTimeOriginalValue + " heb je de volgende afspraken: ";
+            }
+            return baseString + appointments.toString().replace("[", "").replace("]", "");
         } else {
-            return "Er zijn geen afspraken gevonden";
+            return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden";
         }
     }
 }

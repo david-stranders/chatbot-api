@@ -37,9 +37,8 @@ public class Appointment extends BaseEntity {
     @Override
     public String toString() {
         Locale dutch=new Locale("nl", "NL");
-        StringBuilder sb = new StringBuilder("Op ");
-        sb.append(start.format(DateTimeFormatter.ofPattern("EEEE dd MMMM", dutch)));
-        sb.append(" van ");
+        StringBuilder sb = new StringBuilder();
+        sb.append("van ");
         this.addTimeString(sb, start);
         sb.append(" tot ");
         this.addTimeString(sb, end);
