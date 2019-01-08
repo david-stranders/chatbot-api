@@ -64,7 +64,7 @@ public class DataLoader {
         piet = personRepository.save(piet);
         Person klaas = new Person("Klaas Klaassen");
         klaas = personRepository.save(klaas);
-        Person david = new Person("David Stranders");
+        Person david = new Person("Peter Petersen");
         david = personRepository.save(david);
         Person kees = new Person("Kees de Vries");
         kees = personRepository.save(kees);
@@ -78,7 +78,7 @@ public class DataLoader {
 
     private void createAppointments(int numberOfDays) {
 
-        for (int x = 0; x < numberOfDays; x++) {
+        for (int x = 0; x < (numberOfDays + 10); x++) {
             for (int y = 0; y < 2; y++) {
 
                 LocalTime morningStartTime = LocalTime.of(morningHours, minutes);
@@ -113,7 +113,7 @@ public class DataLoader {
                 adjustAll();
             }
 
-            localDate.plusDays(1);
+            localDate = localDate.plusDays(1);
         }
     }
 
