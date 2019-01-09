@@ -16,20 +16,49 @@ import java.util.stream.Collectors;
 @Service
 public class AppointmentServiceImpl implements AppointmentService {
 
+    final Configuration conf = Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS);
+
     private final AppointmentRepository repository;
 
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
-    private boolean future;
     private String dateOriginalValue;
     private String dateTimeOriginalValue;
+
+    private boolean future;
+    private boolean addRoomInfo = true;
+    private boolean addPersonInfo = true;
 
     @Autowired
     public AppointmentServiceImpl(AppointmentRepository repository) {
         this.repository = repository;
     }
 
-    public String findAppointments(String requestBody){
+    public String matchIntent(String requestBody) {
+
+        String intent = JsonPath.using(conf).parse(requestBody).read("$.queryResult.intent.displayName");
+        if (intent.equals("Afspraken_welke")) {
+            this.addRoomInfo = true;
+            this.addPersonInfo = true;
+            return findAppointments(requestBody);
+        } else if (intent.equals("Afspraken_met_wie")) {
+            this.addRoomInfo = false;
+            this.addPersonInfo = true;
+            return findAppointments(requestBody);
+        } else if (intent.equals("Afspraken_waar")) {
+            this.addRoomInfo = true;
+            this.addPersonInfo = false;
+            return findAppointments(requestBody);
+        } else if (intent.equals("Afspraken_hoe_laat")) {
+            this.addRoomInfo = false;
+            this.addPersonInfo = false;
+            return findAppointments(requestBody);
+        }
+
+        return "Sorry, ik begrijp je niet. Kan je dit herhalen in andere bewoordingen?";
+    }
+
+    private String findAppointments(String requestBody){
 
         setStartDateTimeEndDateTime(requestBody);
 
@@ -49,7 +78,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
 
             return baseString + appointments.stream().
-                    map(appointment -> appointment.toString()).
+                    map(appointment -> appointment.toString(addRoomInfo, addPersonInfo)).
                     collect(Collectors.joining(", "));
         } else {
             return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden";
@@ -58,7 +87,6 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private void setStartDateTimeEndDateTime(String requestBody) {
 
-        final Configuration conf = Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS);
         dateOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateOriginalValue");
         dateOriginalValue = cleanOriginalValue(dateOriginalValue);
         dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");

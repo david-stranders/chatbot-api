@@ -34,18 +34,17 @@ public class Appointment extends BaseEntity {
     )
     private List<Person> persons;
 
-    @Override
-    public String toString() {
+    public String toString(boolean appendRoomInfo, boolean appendPersonInfo) {
         Locale dutch=new Locale("nl", "NL");
         StringBuilder sb = new StringBuilder();
         sb.append("van ");
         this.addTimeString(sb, start);
         sb.append(" tot ");
         this.addTimeString(sb, end);
-        if (room != null) {
+        if (appendRoomInfo && room != null) {
             sb.append(" in " + room.getName());
         }
-        if (persons != null && persons.size() > 0) {
+        if (appendPersonInfo && persons != null && persons.size() > 0) {
             sb.append(" met ");
             sb.append(persons.stream()
                     .map(person -> person.getName())
