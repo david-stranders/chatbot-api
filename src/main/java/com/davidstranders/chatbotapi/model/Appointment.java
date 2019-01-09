@@ -36,7 +36,7 @@ public class Appointment extends BaseEntity {
 
     public String toString(boolean appendRoomInfo, boolean appendPersonInfo) {
         Locale dutch=new Locale("nl", "NL");
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("\n");
         sb.append("van ");
         this.addTimeString(sb, start);
         sb.append(" tot ");
