@@ -1,6 +1,7 @@
 package com.davidstranders.chatbotapi.services;
 
 import com.davidstranders.chatbotapi.model.Appointment;
+import com.davidstranders.chatbotapi.model.Intent;
 import com.davidstranders.chatbotapi.repository.AppointmentRepository;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -24,6 +25,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private LocalDateTime endDateTime;
     private String dateOriginalValue;
     private String dateTimeOriginalValue;
+    private Intent intent;
 
     private boolean future;
     private boolean addRoomInfo = true;
@@ -36,29 +38,35 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     public String matchIntent(String requestBody) {
 
-        String intent = JsonPath.using(conf).parse(requestBody).read("$.queryResult.intent.displayName");
-        if (intent.equals("Afspraken_welke")) {
+        String intentString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.intent.displayName");
+        intent = Intent.valueOf(intentString);
+
+        if (intent.equals(Intent.Afspraken_welke)) {
             this.addRoomInfo = true;
             this.addPersonInfo = true;
-            return findAppointments(requestBody);
-        } else if (intent.equals("Afspraken_met_wie")) {
+            return findAppointmentsByDates(requestBody);
+        } else if (intent.equals(Intent.Afspraken_met_wie)) {
             this.addRoomInfo = false;
             this.addPersonInfo = true;
-            return findAppointments(requestBody);
-        } else if (intent.equals("Afspraken_waar")) {
+            return findAppointmentsByDates(requestBody);
+        } else if (intent.equals(Intent.Afspraken_waar)) {
             this.addRoomInfo = true;
             this.addPersonInfo = false;
-            return findAppointments(requestBody);
-        } else if (intent.equals("Afspraken_hoe_laat")) {
+            return findAppointmentsByDates(requestBody);
+        } else if (intent.equals(Intent.Afspraken_hoe_laat)) {
             this.addRoomInfo = false;
             this.addPersonInfo = false;
-            return findAppointments(requestBody);
+            return findAppointmentsByDates(requestBody);
+        } else if (intent.equals(Intent.Afspraken_hoeveel)) {
+            this.addRoomInfo = false;
+            this.addPersonInfo = false;
+            return findAppointmentsByDates(requestBody);
         }
 
         return "Sorry, ik begrijp je niet. Kan je dit herhalen in andere bewoordingen?";
     }
 
-    private String findAppointments(String requestBody){
+    private String findAppointmentsByDates(String requestBody){
 
         setStartDateTimeEndDateTime(requestBody);
 
@@ -66,20 +74,20 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         if (!appointments.isEmpty()) {
 
-            String baseString;
-
             future = !startDateTime.isBefore(LocalDateTime.now());
-            String verb = future ? " heb" : " had";
+            String verb = future ? " heb je " : " had je ";
 
-            if (appointments.size() == 1) {
-                baseString = dateOriginalValue + dateTimeOriginalValue + verb + " je de volgende afspraak: ";
-            } else {
-                baseString = dateOriginalValue + dateTimeOriginalValue + verb + " je de volgende afspraken: ";
+            String baseString = dateOriginalValue + dateTimeOriginalValue + verb;
+            baseString = baseString + appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak");
+
+            if (intent.equals(Intent.Afspraken_hoeveel)) {
+                return baseString;
             }
 
-            return baseString + appointments.stream().
-                    map(appointment -> appointment.toString(addRoomInfo, addPersonInfo)).
-                    collect(Collectors.joining(", "));
+            return baseString + ": " + appointments.stream().
+                        map(appointment -> appointment.toString(addRoomInfo, addPersonInfo)).
+                        collect(Collectors.joining(", "));
+
         } else {
             return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden";
         }

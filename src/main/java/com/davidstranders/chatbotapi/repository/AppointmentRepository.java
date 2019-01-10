@@ -10,8 +10,6 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends CrudRepository<Appointment, Long> {
 
-    List<Appointment> findAllByOrderByStartDesc();
-
     List<Appointment> findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(LocalDateTime start, LocalDateTime end);
 }
 
