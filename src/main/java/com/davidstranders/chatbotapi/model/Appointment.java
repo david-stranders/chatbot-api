@@ -6,7 +6,6 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Entity
@@ -35,7 +34,6 @@ public class Appointment extends BaseEntity {
     private List<Person> persons;
 
     public String toString(boolean appendRoomInfo, boolean appendPersonInfo) {
-        Locale dutch=new Locale("nl", "NL");
         StringBuilder sb = new StringBuilder("\n");
         sb.append("van ");
         this.addTimeString(sb, start);
