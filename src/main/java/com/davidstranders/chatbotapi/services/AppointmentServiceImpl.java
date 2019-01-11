@@ -9,6 +9,7 @@ import com.jayway.jsonpath.Option;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -69,14 +70,11 @@ public class AppointmentServiceImpl implements AppointmentService {
     private String findAppointmentsByDates(String requestBody){
 
         setStartDateTimeEndDateTime(requestBody);
-
         List<Appointment> appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
 
         if (!appointments.isEmpty()) {
 
-            future = !startDateTime.isBefore(LocalDateTime.now());
             String verb = future ? " heb je " : " had je ";
-
             String baseString = dateOriginalValue + dateTimeOriginalValue + verb;
             baseString = baseString + appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak");
 
@@ -87,7 +85,6 @@ public class AppointmentServiceImpl implements AppointmentService {
             return baseString + ": " + appointments.stream().
                         map(appointment -> appointment.toString(addRoomInfo, addPersonInfo)).
                         collect(Collectors.joining(", "));
-
         } else {
             return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden";
         }
@@ -100,27 +97,33 @@ public class AppointmentServiceImpl implements AppointmentService {
         dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");
         dateTimeOriginalValue = cleanOriginalValue(dateTimeOriginalValue);
 
-        final String date = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date");
+        final String dateString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date");
         final String dateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.date_time");
         final String startDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.startDateTime");
         final String endDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.endDateTime");
 
-        DateTimeFormatter formatter;
-        if (date != null && date.length() > 0){
+        if (dateString != null && dateString.length() > 0){
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate date = LocalDate.parse(dateString.substring(0,10), formatter);
+            future = !date.isBefore(LocalDate.now());
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            startDateTime = LocalDateTime.parse(date.substring(0,10) + " 00:00", formatter);
+            startDateTime = LocalDateTime.parse(dateString.substring(0,10) + " 00:00", formatter);
             endDateTime = startDateTime.plusDays(1);
         }
         else if (dateTimeString != null && dateTimeString.length() > 0) {
-            formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
-            startDateTime = LocalDateTime.parse(dateTimeString, formatter);
-            endDateTime = LocalDateTime.parse(dateTimeString, formatter);
+            setFutureAndDates(dateTimeString, dateTimeString);
         } else {
-            formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
-            startDateTime = LocalDateTime.parse(startDateTimeString, formatter);
-            endDateTime = LocalDateTime.parse(endDateTimeString, formatter);
+            setFutureAndDates(startDateTimeString, endDateTimeString);
         }
     }
+
+    private void setFutureAndDates(String startDateTimeString, String endDateTimeString) {
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+        startDateTime = LocalDateTime.parse(startDateTimeString, formatter);
+        future = !startDateTime.isBefore(LocalDateTime.now());
+        endDateTime = LocalDateTime.parse(endDateTimeString, formatter);
+    }
+
 
     private String cleanOriginalValue(String value){
         if (value != null && value.length() > 0) {
