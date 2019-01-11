@@ -72,6 +72,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private String findAppointmentsByDates(String requestBody){
 
         setStartDateTimeEndDateTime(requestBody);
+        setOriginalDateTimeValues(requestBody);
 
         if (startDateTime != null && endDateTime != null) {
             appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
@@ -102,11 +103,6 @@ public class AppointmentServiceImpl implements AppointmentService {
         startDateTime = null;
         endDateTime = null;
 
-        dateOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateOriginalValue");
-        dateOriginalValue = cleanOriginalValue(dateOriginalValue);
-        dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");
-        dateTimeOriginalValue = cleanOriginalValue(dateTimeOriginalValue);
-
         final String dateString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.date");
         final String dateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.date_time");
         final String startDateTimeString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTime.startDateTime");
@@ -136,6 +132,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         endDateTime = LocalDateTime.parse(endDateTimeString, formatter);
     }
 
+    private void setOriginalDateTimeValues(String requestBody) {
+        dateOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateOriginalValue");
+        dateOriginalValue = cleanOriginalValue(dateOriginalValue);
+        dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");
+        dateTimeOriginalValue = cleanOriginalValue(dateTimeOriginalValue);
+    }
 
     private String cleanOriginalValue(String value){
         if (value != null && value.length() > 0) {
