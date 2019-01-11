@@ -28,6 +28,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     private String dateTimeOriginalValue;
     private Intent intent;
 
+    List<Appointment> appointments;
+
     private boolean future;
     private boolean addRoomInfo = true;
     private boolean addPersonInfo = true;
@@ -70,7 +72,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     private String findAppointmentsByDates(String requestBody){
 
         setStartDateTimeEndDateTime(requestBody);
-        List<Appointment> appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
+
+        if (startDateTime != null && endDateTime != null) {
+            appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
+        } else {
+            return "Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur";
+        }
 
         if (!appointments.isEmpty()) {
 
@@ -112,7 +119,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
         else if (dateTimeString != null && dateTimeString.length() > 0) {
             setFutureAndDates(dateTimeString, dateTimeString);
-        } else {
+        }
+        else if (startDateTimeString != null && startDateTimeString.length() > 0 &&
+                endDateTimeString != null && endDateTimeString.length() > 0) {
             setFutureAndDates(startDateTimeString, endDateTimeString);
         }
     }
