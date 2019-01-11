@@ -99,6 +99,9 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private void setStartDateTimeEndDateTime(String requestBody) {
 
+        startDateTime = null;
+        endDateTime = null;
+
         dateOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateOriginalValue");
         dateOriginalValue = cleanOriginalValue(dateOriginalValue);
         dateTimeOriginalValue = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.dateTimeOriginalValue");
