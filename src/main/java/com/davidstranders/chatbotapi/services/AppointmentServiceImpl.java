@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,7 +55,13 @@ public class AppointmentServiceImpl implements AppointmentService {
         this.roomRepository = roomRepository;
     }
 
-    public String matchIntent(String requestBody) {
+    public String handleRequest(String requestBody) {
+        matchIntent(requestBody);
+        findAppointments(requestBody);
+        return buildResultString();
+    }
+
+    private void matchIntent(String requestBody) {
 
         String intentString = JsonPath.using(conf).parse(requestBody).read("$.queryResult.intent.displayName");
         intent = Intent.valueOf(intentString);
@@ -76,14 +81,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         } else if (intent.equals(Intent.Afspraken_hoeveel)) {
             this.addRoomInfo = false;
             this.addPersonInfo = false;
-        } else {
-            return "Sorry, ik begrijp je niet. Kan je dit herhalen in andere bewoordingen?";
         }
-
-        return findAppointmentsByDates(requestBody);
     }
 
-    private String findAppointmentsByDates(String requestBody){
+    private void findAppointments(String requestBody){
 
         setStartDateTimeEndDateTime(requestBody);
         setOriginalDateTimeValues(requestBody);
@@ -91,7 +92,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointments = null;
         if (startDateTime == null || endDateTime == null){
-            return "Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur";
+            return;
         } else if (requestedPersons.isEmpty() && roomNumber == null) {
             appointments = appointmentRepository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
         } else if (!requestedPersons.isEmpty() && roomNumber == null) {
@@ -107,9 +108,13 @@ public class AppointmentServiceImpl implements AppointmentService {
         } else if (!requestedPersons.isEmpty() && roomNumber != null) {
 
         }
+    }
 
+    private String buildResultString(){
+        if (startDateTime == null || endDateTime == null){
+            return "Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur";
+        }
         if (appointments != null && !appointments.isEmpty()) {
-
             String verb = future ? " heb je " : " had je ";
             StringBuilder resultMessage = new StringBuilder(dateOriginalValue + dateTimeOriginalValue + verb);
             resultMessage.append(appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak"));
@@ -134,7 +139,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .toString();
         } else {
             return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden" +
-                    (matchedPersons.isEmpty() ? " met " + requestedPersons : "");
+                    (matchedPersons.isEmpty() ? " met " + requestedPersons.stream().collect(Collectors.joining(" en ")): "");
         }
     }
 

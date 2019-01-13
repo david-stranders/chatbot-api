@@ -27,7 +27,7 @@ public class AppointmentController {
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<DialogFlowResponseEntity> findAppointments(@RequestBody final String requestJson) {
-        String result = service.matchIntent(requestJson);
+        String result = service.handleRequest(requestJson);
         DialogFlowResponseEntity responseEntity = new DialogFlowResponseEntity(result, "findAppointments");
         return new ResponseEntity<>(responseEntity, HttpStatus.OK);
     }
