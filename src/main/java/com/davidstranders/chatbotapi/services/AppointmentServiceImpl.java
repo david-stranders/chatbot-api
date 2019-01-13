@@ -38,7 +38,6 @@ public class AppointmentServiceImpl implements AppointmentService {
     private Intent intent;
     private List<String> requestedPersons;
     private List<Person> matchedPersons;
-    private List<String> notMatchedPersons;
     private String room;
     private Integer roomNumber;
 
@@ -95,12 +94,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         } else if (requestedPersons.isEmpty() && roomNumber == null) {
             appointments = appointmentRepository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
         } else if (!requestedPersons.isEmpty() && roomNumber == null) {
-            matchRequestedPersons();
+            matchedPersons = personRepository.findAllByNameInIgnoreCase(requestedPersons);
             if (!matchedPersons.isEmpty()) {
                 appointments = appointmentRepository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
-                appointments = appointments.stream().filter(appointment -> CollectionUtils.containsAll(appointment.getPersons(), matchedPersons)).collect(Collectors.toList());
-            } else {
-                return notMatchedPersons.stream().collect(Collectors.joining(", ")) + (notMatchedPersons.size() > 1 ? " zijn" : " is") + " niet bekend in jouw agenda.";
+                appointments = appointments.stream()
+                        .filter(appointment -> CollectionUtils.containsAll(appointment.getPersons(), matchedPersons))
+                        .collect(Collectors.toList());
             }
         } else if (requestedPersons.isEmpty() && roomNumber != null) {
 
@@ -111,18 +110,30 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (!appointments.isEmpty()) {
 
             String verb = future ? " heb je " : " had je ";
-            String baseString = dateOriginalValue + dateTimeOriginalValue + verb;
-            baseString = baseString + appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak");
+            StringBuilder resultMessage = new StringBuilder(dateOriginalValue + dateTimeOriginalValue + verb);
+            resultMessage.append(appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak"));
 
-            if (intent.equals(Intent.Afspraken_hoeveel)) {
-                return baseString;
+            if (!matchedPersons.isEmpty()) {
+                resultMessage
+                        .append(" met ")
+                        .append(matchedPersons.stream()
+                                .map(person -> person.getName())
+                                .collect(Collectors.joining(" en ")));
             }
 
-            return baseString + ": " + appointments.stream().
-                        map(appointment -> appointment.toString(addRoomInfo, addPersonInfo)).
-                        collect(Collectors.joining(", "));
+            if (intent.equals(Intent.Afspraken_hoeveel)) {
+                return resultMessage.toString();
+            }
+
+            return resultMessage
+                    .append(": ")
+                    .append(appointments.stream()
+                            .map(appointment -> appointment.toString(addRoomInfo, addPersonInfo))
+                            .collect(Collectors.joining(", ")))
+                    .toString();
         } else {
-            return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden";
+            return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden" +
+                    (matchedPersons.isEmpty() ? " met " + requestedPersons : "");
         }
     }
 
@@ -188,9 +199,4 @@ public class AppointmentServiceImpl implements AppointmentService {
         return value;
     }
 
-    private void matchRequestedPersons() {
-        matchedPersons = personRepository.findAllByNameInIgnoreCase(requestedPersons);
-        Set<String> personNamesLC = matchedPersons.stream().map(person -> person.getName().toLowerCase()).collect(Collectors.toSet());
-        notMatchedPersons =  requestedPersons.stream().filter(name -> !personNamesLC.contains(name.toLowerCase())).collect(Collectors.toList());
-    }
 }

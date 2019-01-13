@@ -26,7 +26,7 @@ public class Appointment extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     private Room room;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany()
     @JoinTable(
             name = "appointment_person",
             joinColumns = {@JoinColumn(name = "appointment_id", referencedColumnName = "id")},
