@@ -113,7 +113,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             StringBuilder resultMessage = new StringBuilder(dateOriginalValue + dateTimeOriginalValue + verb);
             resultMessage.append(appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak"));
 
-            if (!matchedPersons.isEmpty()) {
+            if (matchedPersons != null && !matchedPersons.isEmpty()) {
                 resultMessage
                         .append(" met ")
                         .append(matchedPersons.stream()
