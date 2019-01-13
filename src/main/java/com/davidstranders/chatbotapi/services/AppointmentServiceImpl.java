@@ -89,6 +89,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         setOriginalDateTimeValues(requestBody);
         setOptionalQueryParams(requestBody);
 
+        appointments = null;
         if (startDateTime == null || endDateTime == null){
             return "Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur";
         } else if (requestedPersons.isEmpty() && roomNumber == null) {
@@ -107,7 +108,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         }
 
-        if (!appointments.isEmpty()) {
+        if (appointments != null && !appointments.isEmpty()) {
 
             String verb = future ? " heb je " : " had je ";
             StringBuilder resultMessage = new StringBuilder(dateOriginalValue + dateTimeOriginalValue + verb);
