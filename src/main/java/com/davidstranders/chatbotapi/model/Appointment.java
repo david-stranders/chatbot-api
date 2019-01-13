@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @RequiredArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper=true)
 public class Appointment extends BaseEntity {
 
     @NonNull

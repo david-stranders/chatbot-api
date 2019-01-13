@@ -2,17 +2,24 @@ package com.davidstranders.chatbotapi.services;
 
 import com.davidstranders.chatbotapi.model.Appointment;
 import com.davidstranders.chatbotapi.model.Intent;
+import com.davidstranders.chatbotapi.model.Person;
 import com.davidstranders.chatbotapi.repository.AppointmentRepository;
+import com.davidstranders.chatbotapi.repository.PersonRepository;
+import com.davidstranders.chatbotapi.repository.RoomRepository;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
+import net.minidev.json.JSONArray;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,13 +27,20 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     final Configuration conf = Configuration.defaultConfiguration().addOptions(Option.SUPPRESS_EXCEPTIONS);
 
-    private final AppointmentRepository repository;
+    private final AppointmentRepository appointmentRepository;
+    private final PersonRepository personRepository;
+    private final RoomRepository roomRepository;
 
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private String dateOriginalValue;
     private String dateTimeOriginalValue;
     private Intent intent;
+    private List<String> requestedPersons;
+    private List<Person> matchedPersons;
+    private List<String> notMatchedPersons;
+    private String room;
+    private Integer roomNumber;
 
     List<Appointment> appointments;
 
@@ -35,8 +49,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     private boolean addPersonInfo = true;
 
     @Autowired
-    public AppointmentServiceImpl(AppointmentRepository repository) {
-        this.repository = repository;
+    public AppointmentServiceImpl(AppointmentRepository appointmentRepository,
+                                  PersonRepository personRepository,
+                                  RoomRepository roomRepository) {
+        this.appointmentRepository = appointmentRepository;
+        this.personRepository = personRepository;
+        this.roomRepository = roomRepository;
     }
 
     public String matchIntent(String requestBody) {
@@ -47,37 +65,47 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (intent.equals(Intent.Afspraken_welke)) {
             this.addRoomInfo = true;
             this.addPersonInfo = true;
-            return findAppointmentsByDates(requestBody);
         } else if (intent.equals(Intent.Afspraken_met_wie)) {
             this.addRoomInfo = false;
             this.addPersonInfo = true;
-            return findAppointmentsByDates(requestBody);
         } else if (intent.equals(Intent.Afspraken_waar)) {
             this.addRoomInfo = true;
             this.addPersonInfo = false;
-            return findAppointmentsByDates(requestBody);
         } else if (intent.equals(Intent.Afspraken_hoe_laat)) {
             this.addRoomInfo = false;
             this.addPersonInfo = false;
-            return findAppointmentsByDates(requestBody);
         } else if (intent.equals(Intent.Afspraken_hoeveel)) {
             this.addRoomInfo = false;
             this.addPersonInfo = false;
-            return findAppointmentsByDates(requestBody);
+        } else {
+            return "Sorry, ik begrijp je niet. Kan je dit herhalen in andere bewoordingen?";
         }
 
-        return "Sorry, ik begrijp je niet. Kan je dit herhalen in andere bewoordingen?";
+        return findAppointmentsByDates(requestBody);
     }
 
     private String findAppointmentsByDates(String requestBody){
 
         setStartDateTimeEndDateTime(requestBody);
         setOriginalDateTimeValues(requestBody);
+        setOptionalQueryParams(requestBody);
 
-        if (startDateTime != null && endDateTime != null) {
-            appointments = repository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
-        } else {
+        if (startDateTime == null || endDateTime == null){
             return "Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur";
+        } else if (requestedPersons.isEmpty() && roomNumber == null) {
+            appointments = appointmentRepository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
+        } else if (!requestedPersons.isEmpty() && roomNumber == null) {
+            matchRequestedPersons();
+            if (!matchedPersons.isEmpty()) {
+                appointments = appointmentRepository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
+                appointments = appointments.stream().filter(appointment -> CollectionUtils.containsAll(appointment.getPersons(), matchedPersons)).collect(Collectors.toList());
+            } else {
+                return notMatchedPersons.stream().collect(Collectors.joining(", ")) + (notMatchedPersons.size() > 1 ? " zijn" : " is") + " niet bekend in jouw agenda.";
+            }
+        } else if (requestedPersons.isEmpty() && roomNumber != null) {
+
+        } else if (!requestedPersons.isEmpty() && roomNumber != null) {
+
         }
 
         if (!appointments.isEmpty()) {
@@ -125,6 +153,19 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
     }
 
+    private void setOptionalQueryParams(String requestBody) {
+        JSONArray jsonArray = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.any");
+        requestedPersons = new ArrayList<>();
+        if (jsonArray != null) {
+            for (int i = 0; i < jsonArray.size(); i++){
+                requestedPersons.add((String)jsonArray.get(i));
+            }
+        }
+        room = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.room");
+        roomNumber = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Number ?
+                 JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") : null;
+    }
+
     private void setFutureAndDates(String startDateTimeString, String endDateTimeString) {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
         startDateTime = LocalDateTime.parse(startDateTimeString, formatter);
@@ -145,5 +186,11 @@ public class AppointmentServiceImpl implements AppointmentService {
             value = value.substring(0, 1).toUpperCase() + value.substring(1);
         }
         return value;
+    }
+
+    private void matchRequestedPersons() {
+        matchedPersons = personRepository.findAllByNameInIgnoreCase(requestedPersons);
+        Set<String> personNamesLC = matchedPersons.stream().map(person -> person.getName().toLowerCase()).collect(Collectors.toSet());
+        notMatchedPersons =  requestedPersons.stream().filter(name -> !personNamesLC.contains(name.toLowerCase())).collect(Collectors.toList());
     }
 }
