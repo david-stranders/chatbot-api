@@ -198,7 +198,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private String cleanOriginalValue(String value){
         if (value != null && value.length() > 0) {
-            value = value.replaceAll("[^a-zA-Z0-9\\s]", "");
+            value = value.replaceAll("[^a-zA-Z0-9|:\\s]", "");
             value = value.substring(0, 1).toUpperCase() + value.substring(1);
         }
         return value;
