@@ -12,13 +12,15 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends CrudRepository<Appointment, Long> {
 
-    @Query("SELECT a"
-            + " FROM Appointment a"
-            + " WHERE (a.start >= :start AND a.end <= :end)"
-            + "    OR (a.start < :start AND a.end > :end)"
+    @Query("SELECT a FROM Appointment a JOIN a.room r"
+//            + " WHERE r.n = "
+            + " WHERE ((a.start >= :start AND a.end <= :end)"
+            + "    OR (a.start < :start AND a.end > :end))"
+            + " AND (:room IS NULL OR r.name=:room)"
             + "ORDER BY start ASC")
     List<Appointment> findAppointments(@Param("start") LocalDateTime start,
-                                       @Param("end") LocalDateTime end);
+                                       @Param("end") LocalDateTime end,
+                                       @Param("room") String room);
 
 }
 

@@ -93,17 +93,18 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (startDateTime == null || endDateTime == null){
             return;
         } else if (requestedPersons.isEmpty() && roomNumber == null) {
-            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime);
+            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, null);
         } else if (!requestedPersons.isEmpty() && roomNumber == null) {
             matchedPersons = personRepository.findAllByNameInIgnoreCase(requestedPersons);
             if (!matchedPersons.isEmpty()) {
-                appointments = appointmentRepository.findAppointments(startDateTime, endDateTime);
+                appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, null);
                 appointments = appointments.stream()
                         .filter(appointment -> CollectionUtils.containsAll(appointment.getPersons(), matchedPersons))
                         .collect(Collectors.toList());
             }
         } else if (requestedPersons.isEmpty() && roomNumber != null) {
-
+            addRoomInfo = false;
+            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, "kamer " + roomNumber);
         } else if (!requestedPersons.isEmpty() && roomNumber != null) {
 
         }
@@ -111,13 +112,16 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private String buildResultString(){
         StringBuilder resultMessage = new StringBuilder();
+        String verb = future ? " heb je " : " had je ";
         if (startDateTime == null || endDateTime == null){
             resultMessage.append("Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur");
         } else if (appointments != null && !appointments.isEmpty()) {
-            String verb = future ? " heb je " : " had je ";
             resultMessage.append(dateOriginalValue + dateTimeOriginalValue + verb);
             resultMessage.append(appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak"));
 
+            if (roomNumber != null) {
+                resultMessage.append(" in " + room + " " + roomNumber);
+            }
             if (matchedPersons != null && !matchedPersons.isEmpty()) {
                 resultMessage
                         .append(" met ")
@@ -133,7 +137,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                          .toString();
             }
         } else {
-            resultMessage.append("Voor " + dateOriginalValue.toLowerCase() + dateTimeOriginalValue.toLowerCase() + " zijn er geen afspraken gevonden");
+            resultMessage.append(dateOriginalValue + dateTimeOriginalValue + verb + "geen afspraken");
             resultMessage.append((matchedPersons != null && matchedPersons.isEmpty() ? " met " + requestedPersons.stream().collect(Collectors.joining(" en ")): ""));
             resultMessage.append((roomNumber != null) ? " in " + room + " " + roomNumber : "");
         }
