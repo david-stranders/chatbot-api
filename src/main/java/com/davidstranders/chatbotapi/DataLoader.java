@@ -45,15 +45,15 @@ public class DataLoader {
     @PostConstruct
     private void loadData() {
 
-        Room room1 = new Room("kamer 1");
+        Room room1 = new Room("kamer 1", 1);
         room1 = roomRepository.save(room1);
-        Room room2 = new Room("kamer 2");
+        Room room2 = new Room("kamer 2", 2);
         room2 = roomRepository.save(room2);
-        Room room3 = new Room("kamer 3");
+        Room room3 = new Room("kamer 3", 3);
         room3 = roomRepository.save(room3);
-        Room room4 = new Room("kamer 4");
+        Room room4 = new Room("kamer 4", 4);
         room4 = roomRepository.save(room4);
-        Room room5 = new Room("kamer 5");
+        Room room5 = new Room("kamer 5", 5);
         room5 = roomRepository.save(room5);
 
         this.rooms = new ArrayList<>(Arrays.asList(room1, room2, room3, room4, room5));

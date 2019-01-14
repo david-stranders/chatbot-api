@@ -93,20 +93,18 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (startDateTime == null || endDateTime == null){
             return;
         } else if (requestedPersons.isEmpty() && roomNumber == null) {
-            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, null);
-        } else if (!requestedPersons.isEmpty() && roomNumber == null) {
+            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, roomNumber);
+        } else if (requestedPersons.isEmpty() && roomNumber != null) {
+            addRoomInfo = false;
+            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime,  roomNumber);
+        } else if (!requestedPersons.isEmpty()) {
             matchedPersons = personRepository.findAllByNameInIgnoreCase(requestedPersons);
             if (!matchedPersons.isEmpty()) {
-                appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, null);
+                appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, roomNumber);
                 appointments = appointments.stream()
                         .filter(appointment -> CollectionUtils.containsAll(appointment.getPersons(), matchedPersons))
                         .collect(Collectors.toList());
             }
-        } else if (requestedPersons.isEmpty() && roomNumber != null) {
-            addRoomInfo = false;
-            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, "kamer " + roomNumber);
-        } else if (!requestedPersons.isEmpty() && roomNumber != null) {
-
         }
     }
 
