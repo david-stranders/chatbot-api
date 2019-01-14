@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,8 +38,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     private Intent intent;
     private List<String> requestedPersons;
     private List<Person> matchedPersons;
+    private List<String> notMatchedPersons;
     private String room;
     private Integer roomNumber;
+
+    private String verb;
+    private StringBuilder resultMessage = new StringBuilder();
 
     List<Appointment> appointments;
 
@@ -56,6 +61,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     public String handleRequest(String requestBody) {
+        resetFields();
         matchIntent(requestBody);
         setStartAndEnd(requestBody);
         setOriginalDateTimeValues(requestBody);
@@ -88,8 +94,6 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private void findAppointments(){
-
-        appointments = null;
         if (startDateTime == null || endDateTime == null){
             return;
         } else if (requestedPersons.isEmpty() && roomNumber == null) {
@@ -98,7 +102,14 @@ public class AppointmentServiceImpl implements AppointmentService {
             addRoomInfo = false;
             appointments = appointmentRepository.findAppointments(startDateTime, endDateTime,  roomNumber);
         } else if (!requestedPersons.isEmpty()) {
+            addPersonInfo = false;
             matchedPersons = personRepository.findAllByNameInIgnoreCase(requestedPersons);
+            Set<String> personNamesLC = matchedPersons.stream()
+                                                      .map(person -> person.getName().toLowerCase())
+                                                      .collect(Collectors.toSet());
+            notMatchedPersons = requestedPersons.stream()
+                                                .filter(name -> !personNamesLC.contains(name.toLowerCase()))
+                                                .collect(Collectors.toList());
             if (!matchedPersons.isEmpty()) {
                 appointments = appointmentRepository.findAppointments(startDateTime, endDateTime, roomNumber);
                 appointments = appointments.stream()
@@ -109,8 +120,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private String buildResultString(){
-        StringBuilder resultMessage = new StringBuilder();
-        String verb = future ? " heb je " : " had je ";
+        verb = future ? " heb je " : " had je ";
         if (startDateTime == null || endDateTime == null){
             resultMessage.append("Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur");
         } else if (appointments != null && !appointments.isEmpty()) {
@@ -135,9 +145,26 @@ public class AppointmentServiceImpl implements AppointmentService {
                          .toString();
             }
         } else {
-            resultMessage.append(dateOriginalValue + dateTimeOriginalValue + verb + "geen afspraken");
-            resultMessage.append((matchedPersons != null && matchedPersons.isEmpty() ? " met " + requestedPersons.stream().collect(Collectors.joining(" en ")): ""));
+            if (requestedPersons == null || requestedPersons.isEmpty() || matchedPersons == null || !matchedPersons.isEmpty()) {
+                resultMessage.append(dateOriginalValue + dateTimeOriginalValue + verb + "geen ");
+                if (matchedPersons != null && matchedPersons.size() > 1) {
+                    resultMessage.append("gezamenlijke ");
+                }
+                resultMessage.append("afspraken");
+            }
+            if (matchedPersons != null && !matchedPersons.isEmpty()){
+                resultMessage.append(" met ");
+                resultMessage.append(matchedPersons.stream()
+                        .map(person -> person.getName())
+                        .collect(Collectors.joining(" en ")));
+            }
             resultMessage.append((roomNumber != null) ? " in " + room + " " + roomNumber : "");
+        }
+        resultMessage.append(".\n ");
+        if (notMatchedPersons != null && !notMatchedPersons.isEmpty()) {
+            resultMessage.append(notMatchedPersons.stream()
+                    .collect(Collectors.joining(" en ")));
+            resultMessage.append(" kan ik niet vinden in je agenda.");
         }
         return resultMessage.toString();
     }
@@ -202,6 +229,21 @@ public class AppointmentServiceImpl implements AppointmentService {
             value = value.substring(0, 1).toUpperCase() + value.substring(1);
         }
         return value;
+    }
+
+    private void resetFields(){
+        startDateTime = null;
+        endDateTime = null;
+        dateOriginalValue = null;
+        intent = null;
+        requestedPersons = null;
+        matchedPersons = null;
+        notMatchedPersons = null;
+        room = null;
+        roomNumber = null;
+        verb = null;
+        resultMessage = new StringBuilder();
+        appointments = null;
     }
 
 }
