@@ -57,7 +57,10 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     public String handleRequest(String requestBody) {
         matchIntent(requestBody);
-        findAppointments(requestBody);
+        setStartAndEnd(requestBody);
+        setOriginalDateTimeValues(requestBody);
+        setOptionalQueryParams(requestBody);
+        findAppointments();
         return buildResultString();
     }
 
@@ -84,11 +87,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
     }
 
-    private void findAppointments(String requestBody){
-
-        setStartDateTimeEndDateTime(requestBody);
-        setOriginalDateTimeValues(requestBody);
-        setOptionalQueryParams(requestBody);
+    private void findAppointments(){
 
         appointments = null;
         if (startDateTime == null || endDateTime == null){
@@ -139,11 +138,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .toString();
         } else {
             return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden" +
-                    (matchedPersons.isEmpty() ? " met " + requestedPersons.stream().collect(Collectors.joining(" en ")): "");
+                    (matchedPersons != null && matchedPersons.isEmpty() ? " met " + requestedPersons.stream().collect(Collectors.joining(" en ")): "");
         }
     }
 
-    private void setStartDateTimeEndDateTime(String requestBody) {
+    private void setStartAndEnd(String requestBody) {
 
         startDateTime = null;
         endDateTime = null;
