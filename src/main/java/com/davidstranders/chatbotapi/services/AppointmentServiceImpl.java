@@ -93,11 +93,11 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (startDateTime == null || endDateTime == null){
             return;
         } else if (requestedPersons.isEmpty() && roomNumber == null) {
-            appointments = appointmentRepository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
+            appointments = appointmentRepository.findAppointments(startDateTime, endDateTime);
         } else if (!requestedPersons.isEmpty() && roomNumber == null) {
             matchedPersons = personRepository.findAllByNameInIgnoreCase(requestedPersons);
             if (!matchedPersons.isEmpty()) {
-                appointments = appointmentRepository.findAllByStartGreaterThanEqualAndStartLessThanEqualOrderByStartAsc(startDateTime, endDateTime);
+                appointments = appointmentRepository.findAppointments(startDateTime, endDateTime);
                 appointments = appointments.stream()
                         .filter(appointment -> CollectionUtils.containsAll(appointment.getPersons(), matchedPersons))
                         .collect(Collectors.toList());
@@ -110,12 +110,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private String buildResultString(){
+        StringBuilder resultMessage = new StringBuilder();
         if (startDateTime == null || endDateTime == null){
-            return "Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur";
-        }
-        if (appointments != null && !appointments.isEmpty()) {
+            resultMessage.append("Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur");
+        } else if (appointments != null && !appointments.isEmpty()) {
             String verb = future ? " heb je " : " had je ";
-            StringBuilder resultMessage = new StringBuilder(dateOriginalValue + dateTimeOriginalValue + verb);
+            resultMessage.append(dateOriginalValue + dateTimeOriginalValue + verb);
             resultMessage.append(appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak"));
 
             if (matchedPersons != null && !matchedPersons.isEmpty()) {
@@ -125,21 +125,19 @@ public class AppointmentServiceImpl implements AppointmentService {
                                 .map(person -> person.getName())
                                 .collect(Collectors.joining(" en ")));
             }
-
-            if (intent.equals(Intent.Afspraken_hoeveel)) {
-                return resultMessage.toString();
+            if (!intent.equals(Intent.Afspraken_hoeveel)) {
+            resultMessage.append(": ")
+                         .append(appointments.stream()
+                                .map(appointment -> appointment.toString(addRoomInfo, addPersonInfo))
+                                .collect(Collectors.joining(", ")))
+                         .toString();
             }
-
-            return resultMessage
-                    .append(": ")
-                    .append(appointments.stream()
-                            .map(appointment -> appointment.toString(addRoomInfo, addPersonInfo))
-                            .collect(Collectors.joining(", ")))
-                    .toString();
         } else {
-            return "Voor " + dateOriginalValue + dateTimeOriginalValue + " zijn er geen afspraken gevonden" +
-                    (matchedPersons != null && matchedPersons.isEmpty() ? " met " + requestedPersons.stream().collect(Collectors.joining(" en ")): "");
+            resultMessage.append("Voor " + dateOriginalValue.toLowerCase() + dateTimeOriginalValue.toLowerCase() + " zijn er geen afspraken gevonden");
+            resultMessage.append((matchedPersons != null && matchedPersons.isEmpty() ? " met " + requestedPersons.stream().collect(Collectors.joining(" en ")): ""));
+            resultMessage.append((roomNumber != null) ? " in " + room + " " + roomNumber : "");
         }
+        return resultMessage.toString();
     }
 
     private void setStartAndEnd(String requestBody) {
