@@ -205,8 +205,14 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
         }
         room = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.room");
-        roomNumber = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Number ?
-                ((Number) JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number")).intValue() : null;
+        if (JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Number ) {
+            roomNumber = ((Number) JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number")).intValue();
+        } else if (JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof String &&
+                ((String) JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number")).length() > 0 ) {
+            roomNumber = Integer.valueOf(JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number"));
+        } else {
+            roomNumber = null;
+        }
     }
 
     private void setFutureAndDates(String startDateTimeString, String endDateTimeString) {
