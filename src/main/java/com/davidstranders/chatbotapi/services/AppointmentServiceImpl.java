@@ -205,10 +205,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
         }
         room = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.room");
-        boolean x = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Double;
-        boolean y = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Integer;
-        boolean z = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Number;
-        roomNumber = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Integer ?
+        roomNumber = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Number ?
                  JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") : null;
     }
 
