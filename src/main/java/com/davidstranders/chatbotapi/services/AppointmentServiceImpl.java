@@ -206,7 +206,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
         room = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.room");
         roomNumber = JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") instanceof Number ?
-                 JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number") : null;
+                ((Number) JsonPath.using(conf).parse(requestBody).read("$.queryResult.parameters.number")).intValue() : null;
     }
 
     private void setFutureAndDates(String startDateTimeString, String endDateTimeString) {
