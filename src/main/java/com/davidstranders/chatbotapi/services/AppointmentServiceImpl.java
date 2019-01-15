@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +64,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     public String handleRequest(String requestBody) {
         resetFields();
         matchIntent(requestBody);
-        setStartAndEnd(requestBody);
         setOriginalDateTimeValues(requestBody);
+        setStartAndEnd(requestBody);
         setOptionalQueryParams(requestBody);
         findAppointments();
         return buildResultString();
@@ -121,9 +122,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private String buildResultString(){
         verb = future ? " heb je " : " had je ";
-        if (startDateTime == null || endDateTime == null){
-            resultMessage.append("Kan je je vraag herhalen met daarin een tijdsaanduiding? Bijvoorbeeld vandaag, vanmiddag, overmorgen, om 4 uur");
-        } else if (appointments != null && !appointments.isEmpty()) {
+        if (appointments != null && !appointments.isEmpty()) {
             resultMessage.append(dateOriginalValue + dateTimeOriginalValue + verb);
             resultMessage.append(appointments.size() + (appointments.size() > 1 ? " afspraken" : " afspraak"));
 
@@ -193,6 +192,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         else if (startDateTimeString != null && startDateTimeString.length() > 0 &&
                 endDateTimeString != null && endDateTimeString.length() > 0) {
             setFutureAndDates(startDateTimeString, endDateTimeString);
+        } else {
+            future = true;
+            startDateTime = LocalDateTime.now();
+            LocalTime endTime = LocalTime.of(23, 59, 59);
+            endDateTime = LocalDateTime.of(LocalDate.now(), endTime);
+            dateOriginalValue = "Vandaag";
         }
     }
 
