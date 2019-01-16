@@ -197,7 +197,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             startDateTime = LocalDateTime.now();
             LocalTime endTime = LocalTime.of(23, 59, 59);
             endDateTime = LocalDateTime.of(LocalDate.now(), endTime);
-            dateOriginalValue = "Vandaag";
+            dateOriginalValue = "Voor de rest van vandaag";
         }
     }
 
