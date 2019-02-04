@@ -73,7 +73,7 @@ public class DataLoader {
 
         this.persons = new ArrayList<>(Arrays.asList(jan, piet, klaas, david, kees, karel));
 
-        this.createAppointments(60);
+        this.createAppointments(120);
     }
 
     private void createAppointments(int numberOfDays) {
